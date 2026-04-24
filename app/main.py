@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.db.session import engine, Base
+import app.db.models
 
 Base.metadata.create_all(bind=engine)
 
