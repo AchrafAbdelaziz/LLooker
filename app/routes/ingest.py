@@ -7,7 +7,8 @@ import ollama
 from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import io
-
+import os
+ollama_client = ollama.Client(host=os.getenv("OLLAMA_HOST", "http://localhost:11434"))
 router = APIRouter()
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -31,7 +32,7 @@ def chunk_text(text: str):
     return splitter.split_text(text)
 
 def get_embedding(text: str):
-    response = ollama.embeddings(
+    response = ollama_client.embeddings(
         model="nomic-embed-text",
         prompt=text
     )

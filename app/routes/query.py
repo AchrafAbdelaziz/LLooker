@@ -4,7 +4,8 @@ from app.db.session import get_db
 from app.db.models import DocumentChunk
 from pydantic import BaseModel
 import ollama
-
+import os
+ollama_client = ollama.Client(host=os.getenv("OLLAMA_HOST", "http://localhost:11434"))
 router = APIRouter()
 
 class QueryRequest(BaseModel):
@@ -13,7 +14,7 @@ class QueryRequest(BaseModel):
 @router.post("/query")
 def query_document(request:QueryRequest, db: Session = Depends(get_db)):
     
-    response = ollama.embeddings(
+    response = ollama_client.embeddings(
         model="nomic-embed-text",
         prompt=request.question
     )
