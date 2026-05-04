@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, UploadFile, File, Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -13,7 +14,13 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
     reader = PdfReader(io.BytesIO(file_bytes))
     text = ""
     for page in reader.pages:
-        text += page.extract_text() or ""
+        extracted = page.extract_text() or ""
+        # Remove non-printable and non-ASCII characters
+        extracted = re.sub(r'[^\x20-\x7E\n]', '', extracted)
+        # Collapse multiple spaces and blank lines
+        extracted = re.sub(r' +', ' ', extracted)
+        extracted = re.sub(r'\n{3,}', '\n\n', extracted)
+        text += extracted.strip() + "\n"
     return text
 
 def chunk_text(text: str):
