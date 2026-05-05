@@ -78,15 +78,15 @@ Ask a question about your uploaded documents.
 **Request:**
 ```json
 {
-  "question": "What databases does Achraf know?"
+  "question": "Ask a question about your PDF file"
 }
 ```
  
 **Response:**
 ```json
 {
-  "question": "What databases does Achraf know?",
-  "answer": "Achraf knows Neo4j, SQL, and MongoDB.",
+  "question": "question ?",
+  "answer": "Get your answer !!",
   "sources": ["document.pdf"]
 }
 ```
