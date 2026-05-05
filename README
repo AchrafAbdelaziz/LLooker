@@ -1,4 +1,4 @@
-# RAG Document API
+#LLooker a RAG Document API scanner
  
 A production-ready REST API that lets you upload documents and ask questions about them using Retrieval-Augmented Generation (RAG).
  
