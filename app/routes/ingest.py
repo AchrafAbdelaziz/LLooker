@@ -1,5 +1,5 @@
 import re
-from fastapi import APIRouter, UploadFile, File, Depends
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import DocumentChunk
@@ -39,23 +39,48 @@ def get_embedding(text: str):
     return response["embedding"]
 
 @router.post("/ingest")
-async def ingest_document(
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-    contents = await file.read()
-    text = extract_text_from_pdf(contents)
-    chunks = chunk_text(text)
-
-    for chunk in chunks:
-        embedding = get_embedding(chunk)
-        doc_chunk = DocumentChunk(
-            filename=file.filename,
-            content=chunk,
-            embedding=embedding
+async def ingest_document(file: UploadFile = File(...),db: Session = Depends(get_db)):
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are supported"
         )
-        db.add(doc_chunk)
+    
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="File size exceeds 10MB limit"
+        )
+    try:
+        text = extract_text_from_pdf(contents)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Error occurred while extracting text from PDF"
+        )
+    if not text.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="No text could be extracted from this PDF"
+        )
 
+    chunks = chunk_text(text)
+    try:
+        for chunk in chunks:
+            embedding = get_embedding(chunk)
+            doc_chunk = DocumentChunk(
+                filename=file.filename,
+                content=chunk,
+                embedding=embedding
+            )
+            db.add(doc_chunk)
+    except  Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to store document: {str(e)}"
+        )
     db.commit()
 
     return {
